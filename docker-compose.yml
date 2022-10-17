@@ -1,0 +1,50 @@
+version: "3"
+services:
+  #Express Service
+  api:
+    build:
+      context: .
+      dockerfile: ./.docker/pnpm.Dockerfile
+    image: api:latest
+    container_name: api
+    env_file:
+      - .docker/.env
+    restart: unless-stopped
+    expose:
+      - 80
+    volumes:
+      - ./common:/app/common:ro
+      - ./api:/app
+      - api_modules:/app/node_modules
+      - api_storage:/storage
+    networks:
+      - default
+
+  #Nginx Service
+  webserver:
+    image: nginx:1.19.1-alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    expose:
+      - 80
+      - 443
+    volumes:
+      - ./.docker/nginx.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      VIRTUAL_HOST: nfm
+    networks:
+      - default
+      
+#Docker Networks
+networks:
+  default:
+    external: true
+    name: nginx_proxy
+
+#Volumes
+volumes:
+  api_modules:
+    driver: local
+  api_storage:
+    driver: local
